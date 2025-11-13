@@ -1,0 +1,276 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Lorenz-Attraktor – 2D & 3D Simulation</title>
+  <style>
+    body {
+      background: radial-gradient(circle at top, #0d1117, #000);
+      color: #e6edf3;
+      font-family: 'Segoe UI', sans-serif;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 100vh;
+      margin: 0;
+      overflow: hidden;
+    }
+
+    h1 {
+      margin: 0;
+      margin-bottom: 10px;
+      font-size: 1.8em;
+      color: #00ffff;
+      text-shadow: 0 0 10px #00ffff55;
+    }
+
+    canvas {
+      border: 1px solid #222;
+      border-radius: 12px;
+      background: #000;
+      box-shadow: 0 0 20px #00ffff33;
+    }
+
+    .controls {
+      display: flex;
+      gap: 15px;
+      margin: 15px;
+      flex-wrap: wrap;
+      justify-content: center;
+      background: rgba(255, 255, 255, 0.05);
+      padding: 10px 15px;
+      border-radius: 10px;
+    }
+
+    label {
+      font-size: 0.9em;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      color: #9be7ff;
+    }
+
+    input {
+      margin-top: 4px;
+      background: #111;
+      color: #00ffff;
+      border: 1px solid #00ffff33;
+      border-radius: 6px;
+      text-align: center;
+      width: 60px;
+    }
+
+    button {
+      background: #00ffff22;
+      color: #00ffff;
+      border: 1px solid #00ffff44;
+      border-radius: 6px;
+      cursor: pointer;
+      padding: 6px 10px;
+      transition: all 0.2s;
+    }
+
+    button:hover {
+      background: #00ffff44;
+      transform: scale(1.05);
+    }
+
+    #threeContainer {
+      width: 900px;
+      height: 600px;
+      display: none;
+      border-radius: 12px;
+      overflow: hidden;
+      box-shadow: 0 0 20px #00ffff33;
+    }
+  </style>
+</head>
+<body>
+  <h1>Lorenz-Attraktor – 2D & 3D</h1>
+
+  <div class="controls">
+    <label>σ (Sigma)
+      <input type="number" id="sigma" value="10" step="0.1">
+    </label>
+    <label>ρ (Rho)
+      <input type="number" id="rho" value="28" step="0.1">
+    </label>
+    <label>β (Beta)
+      <input type="number" id="beta" value="2.666" step="0.001">
+    </label>
+    <label>Geschwindigkeit
+      <input type="number" id="speed" value="1" step="0.1">
+    </label>
+    <label>x₀
+      <input type="number" id="x0" value="0.1" step="0.1">
+    </label>
+    <label>y₀
+      <input type="number" id="y0" value="0" step="0.1">
+    </label>
+    <label>z₀
+      <input type="number" id="z0" value="0" step="0.1">
+    </label>
+    <button id="restart">Neu starten</button>
+    <button id="toggleView">Wechsle zu 3D</button>
+  </div>
+
+  <canvas id="lorenzCanvas" width="900" height="600"></canvas>
+  <div id="threeContainer"></div>
+
+  <script src="https://cdn.jsdelivr.net/npm/three@0.153.0/build/three.min.js"></script>
+
+  <script>
+    // === 2D LORENZ ATTRAKTOR ===
+    const canvas = document.getElementById("lorenzCanvas");
+    const ctx = canvas.getContext("2d");
+    const restartBtn = document.getElementById("restart");
+    const toggleBtn = document.getElementById("toggleView");
+
+    let sigma, rho, beta, speed;
+    let x, y, z;
+    let x0, y0, z0;
+    const dt = 0.01;
+    const points = [];
+    let animationId;
+    let mode3D = false;
+
+    function getParams() {
+      sigma = parseFloat(document.getElementById("sigma").value);
+      rho = parseFloat(document.getElementById("rho").value);
+      beta = parseFloat(document.getElementById("beta").value);
+      speed = parseFloat(document.getElementById("speed").value);
+      x0 = parseFloat(document.getElementById("x0").value);
+      y0 = parseFloat(document.getElementById("y0").value);
+      z0 = parseFloat(document.getElementById("z0").value);
+    }
+
+    function reset() {
+      getParams();
+      x = x0; y = y0; z = z0;
+      points.length = 0;
+
+      ctx.resetTransform();
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+      const verticalOffset = 250;
+      ctx.translate(canvas.width / 2, canvas.height / 2 + verticalOffset);
+    }
+
+    function step() {
+      const dx = sigma * (y - x);
+      const dy = x * (rho - z) - y;
+      const dz = x * y - beta * z;
+      x += dx * dt;
+      y += dy * dt;
+      z += dz * dt;
+      points.push({ x, y, z });
+    }
+
+    function draw() {
+      const scale = Math.min(canvas.width, canvas.height) / 60;
+      ctx.beginPath();
+      for (let i = 1; i < points.length; i++) {
+        const p1 = points[i - 1];
+        const p2 = points[i];
+        ctx.moveTo(p1.x * scale, -p1.z * scale);
+        ctx.lineTo(p2.x * scale, -p2.z * scale);
+      }
+      ctx.strokeStyle = "#00ffff";
+      ctx.lineWidth = 0.6;
+      ctx.stroke();
+    }
+
+    function animate2D() {
+      for (let i = 0; i < speed * 2; i++) step();
+      draw();
+      animationId = requestAnimationFrame(animate2D);
+    }
+
+    restartBtn.onclick = () => {
+      cancelAnimationFrame(animationId);
+      reset();
+      if (!mode3D) animate2D();
+      else reset3D();
+    };
+
+    // === 3D LORENZ ATTRAKTOR ===
+    const threeContainer = document.getElementById("threeContainer");
+    const scene = new THREE.Scene();
+    const camera = new THREE.PerspectiveCamera(75, 900 / 600, 0.1, 1000);
+    const renderer = new THREE.WebGLRenderer({ antialias: true });
+    renderer.setSize(900, 600);
+    threeContainer.appendChild(renderer.domElement);
+
+    let geometry, positions, line, index = 0;
+    const maxPoints = 10000;
+
+    function init3D() {
+      geometry = new THREE.BufferGeometry();
+      positions = new Float32Array(maxPoints * 3);
+      geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+
+      const material = new THREE.LineBasicMaterial({ color: 0x00ffff });
+      line = new THREE.Line(geometry, material);
+      scene.add(line);
+      line.scale.set(0.5, 0.5, 0.5);
+      camera.position.z = 50;
+    }
+
+    function lorenzStep3D() {
+      const dx = sigma * (y - x) * dt;
+      const dy = (x * (rho - z) - y) * dt;
+      const dz = (x * y - beta * z) * dt;
+      x += dx; y += dy; z += dz;
+      return [x, y, z];
+    }
+
+    function animate3D() {
+      const [nx, ny, nz] = lorenzStep3D();
+      positions[index * 3] = nx;
+      positions[index * 3 + 1] = ny;
+      positions[index * 3 + 2] = nz;
+      index = (index + 1) % maxPoints;
+      geometry.attributes.position.needsUpdate = true;
+
+      scene.rotation.y += 0.002 * speed;
+      renderer.render(scene, camera);
+      animationId = requestAnimationFrame(animate3D);
+    }
+
+    function reset3D() {
+      cancelAnimationFrame(animationId);
+      scene.clear();
+      index = 0;
+      init3D();
+      getParams();
+      x = x0; y = y0; z = z0;
+      animate3D();
+    }
+
+    // === Umschalten zwischen 2D / 3D ===
+    toggleBtn.onclick = () => {
+      mode3D = !mode3D;
+      if (mode3D) {
+        cancelAnimationFrame(animationId);
+        canvas.style.display = "none";
+        threeContainer.style.display = "block";
+        toggleBtn.textContent = "Wechsle zu 2D";
+        reset3D();
+      } else {
+        cancelAnimationFrame(animationId);
+        threeContainer.style.display = "none";
+        canvas.style.display = "block";
+        toggleBtn.textContent = "Wechsle zu 3D";
+        reset();
+        animate2D();
+      }
+    };
+
+    // === Start in 2D-Modus ===
+    reset();
+    animate2D();
+  </script>
+</body>
+</html>
