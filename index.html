@@ -214,6 +214,7 @@
     let geometry, positions, line, index = 0;
     const maxPoints = 10000;
 
+    // Erstellt Geometry und erstellt linie
     function init3D() {
       geometry = new THREE.BufferGeometry();
       positions = new Float32Array(maxPoints * 3);
@@ -226,6 +227,7 @@
       camera.position.z = 50;
     }
 
+    //berechnet neue kordinaten
     function lorenzStep3D() {
       const dx = sigma * (y - x) * dt;
       const dy = (x * (rho - z) - y) * dt;
@@ -234,6 +236,7 @@
       return [x, y, z];
     }
 
+    //dauerhaft neues zeichnen der pixel und drehen der kamera 
     function animate3D() {
       const [nx, ny, nz] = lorenzStep3D();
       positions[index * 3] = nx;
@@ -247,6 +250,7 @@
       animationId = requestAnimationFrame(animate3D);
     }
 
+    // zurücksetzten der szene 
     function reset3D() {
       cancelAnimationFrame(animationId);
       scene.clear();
@@ -282,5 +286,6 @@
   </script>
 </body>
 </html>
+
 
 
