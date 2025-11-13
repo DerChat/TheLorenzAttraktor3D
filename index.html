@@ -123,6 +123,8 @@
 
   <script>
     // === 2D LORENZ ATTRAKTOR ===
+
+    //Definieren von Variablen
     const canvas = document.getElementById("lorenzCanvas");
     const ctx = canvas.getContext("2d");
     const restartBtn = document.getElementById("restart");
@@ -136,6 +138,7 @@
     let animationId;
     let mode3D = false;
 
+    //Einlesen Variablen
     function getParams() {
       sigma = parseFloat(document.getElementById("sigma").value);
       rho = parseFloat(document.getElementById("rho").value);
@@ -146,6 +149,7 @@
       z0 = parseFloat(document.getElementById("z0").value);
     }
 
+    //Zurücksetzen des Attraktors
     function reset() {
       getParams();
       x = x0; y = y0; z = z0;
@@ -158,6 +162,7 @@
       ctx.translate(canvas.width / 2, canvas.height / 2 + verticalOffset);
     }
 
+    //berechnung der neuen x,y,z werte
     function step() {
       const dx = sigma * (y - x);
       const dy = x * (rho - z) - y;
@@ -168,6 +173,7 @@
       points.push({ x, y, z });
     }
 
+    //einzeichnen von neu berechneten pixeln
     function draw() {
       const scale = Math.min(canvas.width, canvas.height) / 60;
       ctx.beginPath();
@@ -182,12 +188,14 @@
       ctx.stroke();
     }
 
+    // Aufrufen von step() und draw()
     function animate2D() {
       for (let i = 0; i < speed * 2; i++) step();
       draw();
       animationId = requestAnimationFrame(animate2D);
     }
 
+    //Restart UND prüfen ob 2D oder 3D modus
     restartBtn.onclick = () => {
       cancelAnimationFrame(animationId);
       reset();
@@ -274,4 +282,5 @@
   </script>
 </body>
 </html>
+
 
